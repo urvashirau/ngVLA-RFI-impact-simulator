@@ -27,9 +27,9 @@ Additional documentation is being preparad. Below is a screenshot of the app.
 ![Example Screenshot](./Docs/example_rfi_app.png)
 
 
-#To run the simulator : 
+# To run the simulator : 
 
-##Install python3
+## Install python3
 
 ```
 export PPY=`which python3`
@@ -38,7 +38,7 @@ virtualenv -p $PPY --setuptools ./local_python3
 ./local_python3/bin/pip install --upgrade numpy matplotlib ipython dash pandas
 ```
 
-##Run the app 
+## Run the app 
 ```
 ./local_python3/bin/python rfiapp.py
 ```
