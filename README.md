@@ -25,3 +25,24 @@ to achieve the estimated degree of data recovery.
 Additional documentation is being preparad. Below is a screenshot of the app. 
 
 ![Example Screenshot](./Docs/example_rfi_app.png)
+
+
+#To run the simulator : 
+
+##Install python3
+
+```
+export PPY=`which python3`
+virtualenv -p $PPY --setuptools ./local_python3
+./local_python3/bin/pip install --upgrade pip
+./local_python3/bin/pip install --upgrade numpy matplotlib ipython dash pandas
+```
+
+##Run the app 
+```
+./local_python3/bin/python rfiapp.py
+```
+
+Point your browser to   http://127.0.0.1:8050/
+
+
