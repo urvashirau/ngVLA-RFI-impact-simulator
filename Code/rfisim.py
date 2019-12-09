@@ -129,7 +129,7 @@ def base_corr_frac(fov=90.0,
 
 
 ### Calculate RFI duty cycle, when viewed at the data resolutoin
-def calcfilling(siglen=1e-05,siggap=5e-05, datares=1e-05,asol='D',arrayfrac='core'):
+def calcfilling(siglen=1e-05,siggap=5e-05, datares=1e-05,asol='D',arrayfrac='core', rfitype=''):
     """
     Sol = C :  modeling and subtraction
             Assume that the timerange is fully-filled with RFI.
@@ -143,7 +143,9 @@ def calcfilling(siglen=1e-05,siggap=5e-05, datares=1e-05,asol='D',arrayfrac='cor
     ##     and data resolution is finer than signal 
     ##     and data res is what is available after correlation
     if asol=='C' and datares <= siglen and datares >= 1e-06 : 
-        frac = 0.4  # 60% efficiency in removal, for baselines where correlation is maintained
+        frac = 0.5  # 50% efficiency in removal, for baselines where correlation is maintained
+        if rfitype.count('LEO')>0:
+            frac = 0.9
     else:
         ## Filling factor for the chosen datares. 
         frac = max(siglen,datares)/(siglen+siggap)
@@ -193,10 +195,12 @@ def get_data_loss_fraction(rfichar={}, frange=[1.0,120.0],sol=['D'],verbose=Fals
 
     totals={}
     rfinames=[]
+    procpars={}
     ## For each type of RFI
     for atom in rfichar.keys():
         rfinames.append(atom)
         totals[atom] = pl.zeros(len(totalx))
+        procpars[atom] = {'datares':pl.zeros(len(totalx)), 'sol':['D']*len(totalx)}
 
         ## Calculate fractions of baselines where RFI is correlated vs uncorrelated
         timebasefrac={}
@@ -225,7 +229,7 @@ def get_data_loss_fraction(rfichar={}, frange=[1.0,120.0],sol=['D'],verbose=Fals
                     tbfrac = tbfrac * rfichar[atom]['timefrac'][ii]
                     tbfrac_uncorr = tbfrac_uncorr * rfichar[atom]['timefrac'][ii]
 
-                    aloss =  (calcfilling(siglen=rfichar[atom]['timeres'], siggap=rfichar[atom]['timegap'], datares=dress, asol=asol,arrayfrac=rfichar[atom]['arrayfrac'][ii])  )
+                    aloss =  (calcfilling(siglen=rfichar[atom]['timeres'], siggap=rfichar[atom]['timegap'], datares=dress, asol=asol,arrayfrac=rfichar[atom]['arrayfrac'][ii], rfitype = atom)  )
 
                     ### If RFI filling is low, then assume that 'A' can take it out completely, so no decorr noise.
                     aloss_uncorr = 0.1 if ( asol=='A' and aloss < 0.5 ) else aloss
@@ -251,33 +255,16 @@ def get_data_loss_fraction(rfichar={}, frange=[1.0,120.0],sol=['D'],verbose=Fals
             for tt in range(0,len(totalx)):
                 if totalx[tt]>=ran[0] and totalx[tt]<=ran[1]:
                     totals[atom][tt] = bestlossfrac
-
-        for tt in range(0,len(totalx)):
-            for th in thresh:
-                if totals[atom][tt] > th:
-                    maxtotal[str(th)][tt] = pl.nan
-
-    ### Combine info about all RFI types
-    totalfrac = pl.zeros( len(totalx) )
-    maxfrac = pl.zeros( len(totalx) )
-#    for atom in totals.keys():
-#        pl.plot(totalx,totals[atom],label=atom)
-##        totalfrac = totalfrac + totals[atom]
-##    totalfrac = totalfrac/len(totals.keys())
-
-    ## Pick the RFI source that produces the maximum loss. 
-    for ii in range(0,len(totalfrac)):
-        for atom in totals.keys():
-            if totals[atom][ii] > maxfrac[ii]:
-                maxfrac[ii] = totals[atom][ii] 
-            totalfrac[ii] = totalfrac[ii] + totals[atom][ii]
-    #pl.plot(totalx,1.0+totalfrac,label='All together',color='k',linestyle='dashed')
-    
-    totalfrac[ totalfrac > 1.0 ] = 1.0
+                    procpars[atom]['datares'][tt] = dress
+                    procpars[atom]['sol'][tt] = bestsol
+                    
+                    ## Special case for geo-stat satellites.... (iridium and sirius XM)
+                    if atom.count('LEO')>0 and ran[1] < 8.0 and 'C' in sol:
+                        totals[atom][tt] = bestlossfrac*(0.5/0.9)   ## To match 0.5 for non-LEO (line 146)
 
     #print('Total RFI loss with '+ str(sol)+ ' across freqs '+ str(frange) + ' = ('+ str(pl.mean(maxfrac)) + ' to ' + str(pl.mean(totalfrac)) )
 
-    return totalx, totals
+    return totalx, totals, procpars
 
 
 def get_observing_time_ratio(totalx, totals):
@@ -302,6 +289,45 @@ def get_observing_time_ratio(totalx, totals):
 #    print ('Required total observing time to compensate for data loss and reach the same continuum imaging sensitivity: ' + str( pl.mean(ttime) ) )
 
     return ttime_min, ttime_max, np.mean(maxfrac), np.mean(totalfrac)
+
+def get_compute_intensity(totalx, procpars):
+    
+    compute_intensity = {}
+    for atom in procpars.keys():
+        compute_intensity[atom] = np.zeros( len(totalx) )
+
+    tres = 1.0    ## ntimes in 1 second
+#    fres = 1e+5  ## nchans in 100 MHz
+
+    for ii in range(0,len(totalx)):        ## for each freq
+        for atom in procpars.keys():    ## for each RFI type
+            datares = procpars[atom]['datares'][ii]
+            sol = procpars[atom]['sol'][ii]
+
+            if datares>0.0:
+                ntimes = tres / float(datares)
+                #            nchans = fres/solutions[sol]['chanres']
+                nchans=1
+                npol=4
+            
+                ## Number of visibilities per 1 second (and per channel)
+                nvis = totalvis * ntimes * nchans * npol
+
+                if sol=='A':
+                    nvis = totalants * ntimes * nchans + npol/2
+                
+                ## Number of operations per datum ( relative ! )
+                nops = 1   # if sol is 'D' it's just a one-step average calculation
+                if sol=='B':
+                    nops = 20    # 20 times more operations : several averages, etc.
+                if sol=='C':
+                    nops = 200  # 200 times more operations : matrix decompositions
+                    
+                comp_int_atom = nvis * nops
+
+                compute_intensity[atom][ii] = comp_int_atom
+
+    return compute_intensity
 
 
 
