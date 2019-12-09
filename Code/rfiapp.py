@@ -56,7 +56,7 @@ app.layout = html.Div(
                     dcc.Checklist(
                         id='algorithm-picker',
                         options=[
-                            {'label': 'Post-Processing Flagging', 'value': 'D'},
+                            {'label': 'Post-Processing Flagging', 'value': 'D', 'disabled':True},
                             {'label': 'Antenna-based Real Time Flagging', 'value': 'A'},
                             {'label': 'Baseline-based High time resolution Flagging (in-correlator)', 'value': 'B'},
                             {'label': 'RFI modeling and subtraction at high time resolution', 'value': 'C'}
@@ -78,7 +78,7 @@ app.layout = html.Div(
                                         {'label': 'RFI at 20deg from phase-center (practical estimate)', 'value': 'prac_decorr'},
                                         {'label': 'RFI at 90deg from phase-center (maximal decorrelation)', 'value': 'max_decorr'}
                                     ],
-                                    value='no_decorr',
+                                    value='prac_decorr',
                                     #labelStyle={'display': 'inline-block'}
                                 )
                             ], style={'width':'50%', 'height':'50%','display':'inline-block', 'vertical-align':'top'} ),
@@ -113,7 +113,11 @@ app.layout = html.Div(
             html.Div( 
                 children=[ 
                     dcc.Graph(id='extra_observing')
-                ], style={'width':'50%', 'height':'50%','display':'inline-block', 'vertical-align':'top'})  
+                ], style={'width':'50%', 'height':'50%','display':'inline-block', 'vertical-align':'top'}) , 
+#            html.Div( 
+#                children=[ 
+#                    dcc.Graph(id='compute_intensity')
+#                ], style={'width':'33%', 'height':'50%','display':'inline-block', 'vertical-align':'top'})  
         ] )
     ]
 )
@@ -121,6 +125,7 @@ app.layout = html.Div(
 @app.callback(
     [Output('rfi_loss_frac', 'figure'),
      Output('extra_observing', 'figure')],
+#     Output('compute_intensity','figure')],
     [Input('rfitable', 'data'),
      Input('rfitable', 'columns'),
      Input('algorithm-picker','value'),
@@ -133,63 +138,149 @@ def update_figure(rfidata, rficolumns, algolist, decorr, dynr):
     rfidict = get_rfi_dict( df )
 
     ### Make plot of RFI loss fraction
-    totalx, totals = get_data_loss_fraction(rfichar = rfidict, sol=algolist, decorr=decorr, dynr=dynr)
+    totalx, totals, procpars = get_data_loss_fraction(rfichar = rfidict, sol=algolist, decorr=decorr, dynr=dynr)
     extratime_min, extratime_max, fracloss_min, fracloss_max = get_observing_time_ratio(totalx, totals)
+    
+#    compute_intensity = get_compute_intensity( totalx, procpars )
+
+    ##################################################################
 
     traces1=[]
     for atom in totals.keys():
         traces1.append( go.Scatter(x=totalx, y=totals[atom], fill='tozeroy',mode='none',name=atom))
-        
+    
+    # Add band labels
+    bandcols = ['green','cyan','green','cyan','green','cyan']
     bcnt=1
     for band in ngvlabands:
         traces1.append(go.Scatter(
             x=[band[0], (band[0]+band[1])/2.0, band[1]],
-#            y=[0.95+0.007*bcnt, 0.95+0.007*bcnt, 0.95+0.007*bcnt],
             y=[0.95, 0.95, 0.95],
+#            x=[band[0], band[1]],
+#            y=[0.95, 0.95],
             mode="lines+text",
+            line_color=bandcols[bcnt-1],
+            line_width=3,
+            name="Band"+str(bcnt),
+            text=["", "Band "+str(bcnt),""],
+#            text=["    Band "+str(bcnt),""],
+            textposition="bottom center",
+            showlegend=False
+        ))
+        bcnt = bcnt+1
+
+    # Add the oxygen band
+    traces1.append(go.Scatter( x=[50.0, 70.0], y=[1.0,1.0], fill='tozeroy', mode='none', 
+                               name='Atm Oxygen' , fillcolor='rgba(80,80,80,0.3)' ) ) 
+
+    ##################################################################
+
+    ### Make plot of extra observing time required.
+    traces2 = []
+    traces2.append( go.Scatter(x=totalx, y=extratime_min, name='RFI from multiple\nsources overlap\nin the data', 
+                               showlegend=True,
+                               opacity=0.5))
+    traces2.append( go.Scatter(x=totalx, y=extratime_max, name='RFI from multiple\nsources affect different\nsubsets of the data', 
+                               showlegend=True,
+                               opacity=0.5))
+    
+    ymax = np.min( [np.max(extratime_max)+0.5, 12.0] )
+    # Add band labels
+    bcnt=1
+    for band in ngvlabands:
+        traces2.append(go.Scatter(
+            x=[band[0], (band[0]+band[1])/2.0, band[1]],
+#            y=[0.95+0.007*bcnt, 0.95+0.007*bcnt, 0.95+0.007*bcnt],
+            y=[0.95*ymax, 0.95*ymax, 0.95*ymax],
+            mode="lines+text",
+            line_color=bandcols[bcnt-1],
+            line_width=3,
             name="Band"+str(bcnt),
             text=["", "Band "+str(bcnt),""],
             textposition="bottom center",
             showlegend=False
         ))
         bcnt = bcnt+1
+    # Add the oxygen band
+    traces2.append(go.Scatter( x=[50.0, 70.0], y=[ymax, ymax], 
+                               fill='tozeroy', mode='none', 
+                               name='Atm Oxygen' , fillcolor='rgba(80,80,80,0.3)' , showlegend=False) ) 
+    ##################################################################
 
-    ### Make plot of extra observing time required.
-    traces2 = []
-    traces2.append( go.Scatter(x=totalx, y=extratime_min, name='RFI from multiple \n sources overlap \n in the data', 
-                               showlegend=True,
-                               opacity=0.5))
-    traces2.append( go.Scatter(x=totalx, y=extratime_max, name='RFI from multiple \n sources affect different  \n subsets of the data', 
-                               showlegend=True,
-                               opacity=0.5))
-    
+    ### Make plot of compute load
+#    traces3=[]
+#    maxx = 0.0
+#    for atom in compute_intensity.keys():
+#        traces3.append( go.Scatter(x=totalx, y=compute_intensity[atom], fill='tozeroy',mode='none', name=atom))
+#        if np.max(compute_intensity[atom]) > maxx:
+#            maxx = np.max(compute_intensity[atom])
+
+#    ymax = maxx
+#    # Add band labels
+#    bcnt=1
+#    for band in ngvlabands:
+#        traces3.append(go.Scatter(
+#            x=[band[0], (band[0]+band[1])/2.0, band[1]],
+#            y=[0.95*ymax, 0.95*ymax, 0.95*ymax],
+#            mode="lines+text",
+#            line_color=bandcols[bcnt-1],
+#            line_width=3,
+#            name="Band"+str(bcnt),
+#            text=["", "Band "+str(bcnt),""],
+#            textposition="bottom center",
+#            showlegend=False
+#        ))
+#        bcnt = bcnt+1
+#    # Add the oxygen band
+#    traces3.append(go.Scatter( x=[50.0, 70.0], y=[ymax, ymax], 
+#                               fill='tozeroy', mode='none', 
+#                               name='Atm Oxygen' , fillcolor='rgba(80,80,80,0.3)' , showlegend=False) ) 
+    ##################################################################
+
+
 
     return [{
         'data': traces1,
         'layout': go.Layout(
             #            xaxis={'title': 'Frequency (GHz)','range':[1.0,120.0]},
-            xaxis={'title': 'Frequency (GHz)','type':'log', 'range':[0,pl.log(np.max(totalx))/2.2]},
+            xaxis={'title': 'Frequency (GHz)','type':'log', 'range':[0,pl.log(np.max(totalx))/2.3]},
             yaxis={'title': 'Fraction of data loss','range':[0,1]},
             #xaxis_type="log",
             title="Fraction of data loss   [Average :  %2.1f%% to %2.1f%% ]"%(fracloss_min*100.0, fracloss_max*100.0),
             #            width = 1000, height = 500,
-            autosize = True
+            autosize = True,
+            legend_orientation = 'h',
+            legend=dict(x=0.05, y=1.15)
         ) 
     },
             {
                 'data': traces2,
                 'layout': go.Layout(
                     #            xaxis={'title': 'Frequency','range':[1.0,120.0]},
-                    xaxis={'title': 'Frequency','type':'log', 'range':[0,pl.log(np.max(totalx))/2.0]},
-                    yaxis={'title': 'Extra observing time required','range':[0.9,  np.max(extratime_max)+0.5  ]},
+                    xaxis={'title': 'Frequency','type':'log', 'range':[0,pl.log(np.max(totalx))/2.3]},
+                    yaxis={'title': 'Scale factor for observing time','range':[0.9, np.min( [np.max(extratime_max)+0.5 , 12] ) ]},
                     #xaxis_type="log",
-                    title="Ratio of observing time required to reach target sensitivity (with RFI / no RFI )",
+                    title="Observing time required to reach target sensitivity (scale factor = 1 for no RFI)",
                     #            width = 1000, height = 500,
                     autosize = True,
                     legend_orientation = 'h',
-                    legend=dict(x=0.05, y=1.1)
+                    legend=dict(x=0.05, y=1.15)
                 ) 
-            }
+            },
+#            {
+#                'data': traces3,
+#                'layout': go.Layout(
+#                    #            xaxis={'title': 'Frequency','range':[1.0,120.0]},
+#                    xaxis={'title': 'Frequency','type':'log', 'range':[0,pl.log(np.max(totalx))/2.0]},
+#                    yaxis={'title': 'Compute Intensity','type':'log','range':[0,12]},
+#                    #xaxis_type="log",
+#                    title="Compute Intensity = Data rate  x  Number of operations per datum",
+#                    #            width = 1000, height = 500,
+#                    autosize = True,
+#                    legend_orientation = 'h',
+#                    legend=dict(x=0.05, y=1.15)
+#                ) 
+#            }
         ]
     
 
