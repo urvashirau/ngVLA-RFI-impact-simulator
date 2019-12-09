@@ -8,8 +8,7 @@ of each emission type, etc), choices of one or more RFI mitigation solutions and
 due to RFI decorrelation. 
 A data loss fraction is estimated based on the RFI filling factor (across baselines, time and frequency) when it is viewed
 at the channel widths and integration timesteps appropriate to each RFI mitigation solution option. This calculation includes 
-calculations of fractions of baselines over which RFI is correlated, decorrelated or uncorrelated.   
-For each processing stage, data rates at which the algorithms must operate are also calculated.
+fractions of baselines over which RFI is correlated, decorrelated or uncorrelated.   
 
 For a given set of RFI characteristics, one can estimate the fractional data loss across frequency, assuming only 
 post-processing RFI identification and flagging.
@@ -22,7 +21,7 @@ implementing the chosen RFI solutions, framed as a data-rate at which algorithms
 to achieve the estimated degree of data recovery.
 
 
-Additional documentation is being preparad. Below is a screenshot of the app. 
+Additional documentation is being prepared as ngVLA Memo #70. Below is a screenshot of the app. 
 
 ![Example Screenshot](./Docs/example_rfi_app.png)
 
