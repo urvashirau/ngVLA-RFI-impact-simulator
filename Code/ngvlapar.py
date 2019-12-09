@@ -36,7 +36,7 @@ if arrtype=='ngvla' or arrtype=='approx_ngvla':
     ##   30 x 18m  : Long Baselines  ( 1000km baselines, in 10 clusters/stations )
     arrayfracinfo={
         'core': {'nant':119.0, 'maxbase':1.0},   ## Core and compact core
-        'outlier':{'nant':30, 'maxbase':1000.0},    ## 
+        'outlier':{'nant':30+20, 'maxbase':1000.0},    ## 
 #        'full': {'nant':233, 'maxbase':100.0}
         'full': {'nant':263, 'maxbase':1000.0}
     }
