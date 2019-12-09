@@ -53,14 +53,14 @@ rfi = {
     'Cell 5G': {'types':['cell phones','cars on hwy60', 'aircraft 5G'],
                 'freqrange':[[1.427,1.518],[3.3,3.8],[5.15,5.925],[24.25,27.5],[31.8,33.4],[37.0,43.5],[45.5,50.2],[50.4,52.6],[66.0,76.0],[81.0,86.0]] , ## GHz
                 'freqres': 200.0,  # kHz
-                'timeres': 1e-03, #millisec signal packets
+                'timeres': 1e-04, #millisec signal packets
                 'timegap': 0.0, ## continuous when on
                 'timefrac':[1.0, 0.2, 0.2] , ## Fraction of time per day, from 0 to 1
                 'arrayfrac' : ['outlier','core', 'full'] ## people, cars on hwy 60, 5G illuminated aircraft
             },
     
-    'LEO Sat': {'types':['spacex','oneweb','boeing'],
-                       'freqrange':[[10.7,12.7],[13.85,14.5],[17.8,18.6],[18.8,19.3],[27.5,29.1], [29.5,30.0],[17.8,19.3],[27.5,29.1],[29.5,30.0],[37.5,42.0],[47.2,50.2],[50.4,51.4]] , ## GHz
+    'LEO Sat': {'types':['spacex','oneweb','boeing','Iridium Data', 'sirius XM'],
+                       'freqrange':[[1.61,1.63],[2.2,2.33],[10.7,12.7],[13.85,14.5],[17.8,18.6],[18.8,19.3],[27.5,29.1], [29.5,30.0],[17.8,19.3],[27.5,29.1],[29.5,30.0],[37.5,42.0],[47.2,50.2],[50.4,51.4]] , ## GHz
                        'freqres': 200.0,  # kHz
                        'timefrac':[0.9] , ## Fraction of time per day, from 0 to 1
                        'timeres': 1e-04 , ## Time res at which coherence is preserved## Continuous when on
@@ -77,7 +77,7 @@ rfi = {
                       'arrayfrac' : ['core','outlier'] ## 'outlier', 'core', 'full'   
                   },
     
-    'Sat Comm': {'types':['GNSS','SAR','Iridium','Sirius XM','CloudSat'],
+    'Sat Comm': {'types':['GNSS','SAR','Iridium Comm','Military','CloudSat'],
                        'freqrange':[[1.1,1.8],[2.0,2.3],[2.5,2.7],[3.4,4.2],[7.25,7.75],[8.0,9.0],[10.7,12.8],[18.0,20.0], [23.0,27.0], [94.01,94.09] ] , ## GHz
                        'freqres': 100.0,  # kHz
                        'timefrac':[0.4] , ## Fraction of time per day, from 0 to 1
