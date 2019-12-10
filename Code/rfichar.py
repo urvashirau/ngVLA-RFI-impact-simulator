@@ -28,7 +28,7 @@ rfi = {
                'timegap': 0.01, ## Gaps of 100msec (Nearly continuous when on.)
 #               'timefrac':[0.4] , ## Always, someone radiating near some antennas.
 #               'arrayfrac' : ['core'] ## 'outlier', 'core', 'full'   
-               'timefrac':[0.9,0.4] , ## Always, someone radiating near some antennas.
+               'timefrac':[1.0,0.4] , ## Always, someone radiating near some antennas.
                'arrayfrac' : ['outlier','core'] ## 'outlier', 'core', 'full'   
            },
 
@@ -41,22 +41,31 @@ rfi = {
                'arrayfrac' : ['outlier','core'] ## 'outlier', 'core', 'full'   
            },
 
-    'UWBcar': {'types':['car radar'], 
-               'freqrange':[[22.0,29.0]] , ## GHz
-               'freqres': 8000.0*1e+3,  # 8 GHz at 24 GHz for vehicles
-               'timeres': 1e-09, # 
-               'timegap': 1e-07, ## 10 MHz pulse rate
-               'timefrac':[0.2,0.03] , ## Cars near outlier antennas, and passing on Hwy 60.
-               'arrayfrac' : ['outlier','core'] ## 'outlier', 'core', 'full'   
-           },
+#   'UWBcar': {'types':['car radar'], 
+#               'freqrange':[[22.0,29.0]] , ## GHz
+#               'freqres': 8000.0*1e+3,  # 8 GHz at 24 GHz for vehicles
+#               'timeres': 1e-09, # 
+#               'timegap': 1e-07, ## 10 MHz pulse rate
+#               'timefrac':[0.2,0.03] , ## Cars near outlier antennas, and passing on Hwy 60.
+#               'arrayfrac' : ['outlier','core'] ## 'outlier', 'core', 'full'   
+#           },
 
-    'Cell 5G': {'types':['cell phones','cars on hwy60', 'aircraft 5G'],
-                'freqrange':[[1.427,1.518],[3.3,3.8],[5.15,5.925],[24.25,27.5],[31.8,33.4],[37.0,43.5],[45.5,50.2],[50.4,52.6],[66.0,76.0],[81.0,86.0]] , ## GHz
+    'Cell 5G - Low/Mid': {'types':['cell phones','cars on hwy60', 'aircraft 5G'],
+                'freqrange':[[1.427,1.518],[3.3,3.8],[5.15,5.925]] , ## GHz
                 'freqres': 200.0,  # kHz
                 'timeres': 1e-04, #millisec signal packets
                 'timegap': 0.0, ## continuous when on
-                'timefrac':[1.0, 0.2, 0.2] , ## Fraction of time per day, from 0 to 1
-                'arrayfrac' : ['outlier','core', 'full'] ## people, cars on hwy 60, 5G illuminated aircraft
+                          'timefrac':[1.0, 0.25, 0.1] , ## Fraction of time per day, from 0 to 1
+                          'arrayfrac' : ['outlier', 'full', 'core'] ## people, cars on hwy 60, 5G illuminated aircraft
+            },
+    
+    'Cell 5G - High': {'types':['cell phones','local p2p','cars on Hwy 60', 'IoT'],
+                'freqrange':[[24.25,27.5],[31.8,33.4],[37.0,43.5],[45.5,50.2],[50.4,52.6],[66.0,76.0],[81.0,86.0]] , ## GHz
+                'freqres': 200.0,  # kHz
+                'timeres': 1e-04, #millisec signal packets
+                'timegap': 0.0, ## continuous when on
+                       'timefrac':[1.0, 0.2] , ## Fraction of time per day, from 0 to 1
+                'arrayfrac' : ['outlier','core'] ## people, cars on hwy 60, 5G illuminated aircraft
             },
     
     'LEO Sat': {'types':['spacex','oneweb','boeing','Iridium Data', 'sirius XM'],
