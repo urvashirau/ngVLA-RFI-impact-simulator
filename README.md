@@ -11,17 +11,13 @@ at the channel widths and integration timesteps appropriate to each RFI mitigati
 fractions of baselines over which RFI is correlated, decorrelated or uncorrelated.   
 
 For a given set of RFI characteristics, one can estimate the fractional data loss across frequency, assuming only 
-post-processing RFI identification and flagging.
-Then, by choosing one or more RFI mitigation options and comparing data loss fractions, one can estimate the fraction
-of data that is recoverable by efficient RFI mitigation.  
-All data loss estimates are also translated to a saving in extra observing time that would otherwise have been 
-required to compensate for RFI data losses. 
-Finally, in order to perform a cost-benefit analysis, these gains may be compared to the compute cost of 
-implementing the chosen RFI solutions, framed as a data-rate at which algorithms must be applied in order 
-to achieve the estimated degree of data recovery.
+post-processing RFI identification and flagging. Then, by choosing one or more RFI mitigation options and comparing data loss fractions, one can estimate the fraction
+of data that is recoverable by efficient RFI mitigation.  All data loss estimates are also translated to a saving in extra observing time that would otherwise have been 
+required to compensate for RFI data losses. Finally, in order to perform a cost-benefit analysis, these gains may be compared to the compute cost of 
+implementing the chosen RFI solutions, framed as a data-rate at which algorithms must be applied in order to achieve the estimated degree of data recovery.
 
 
-Additional documentation is being prepared as ngVLA Memo #70. Below is a screenshot of the app. 
+Documentation is available as [ngVLA Memo #70](https://library.nrao.edu/public/memos/ngvla/NGVLA_70.pdf). Below is a screenshot of the app. 
 
 ![Example Screenshot](./Docs/example_rfi_app.png)
 
