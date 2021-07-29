@@ -11,7 +11,7 @@ Documentation is available as [ngVLA Memo #70](https://library.nrao.edu/public/m
 ## RFI_Decorrelation_And_Attenuation
 A tool that implements Eqn 19 of Thompson et al, 1982 to predict the degree of attenuation expected for RFI at different locations in the sky, for the VLA and ngVLA array geometries.
 
-Documentation is available [here](./RFI_Decorrelation_And_Attenuation/README.md). 
+Documentation is available [here](./RFI_Decorrelation_And_Attenuation/README.md). Note : This is a preliminary, un-verified and incomplete version. 
 
 ## Single_Baseline_Correlator
 A script to simulate/implement the inner workings of a single-baseline correlator. Show how complex visibilities are formed and relate to the input voltage streams per antenna, and also how delay and channel bandwidth result in the characteristic Sinc attenuation pattern due to decorrelation.  This is a teaching/learning tool (code from Shrishti Yadav). 
